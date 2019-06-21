@@ -32,12 +32,15 @@ def create_app(config_name):
     app.config.from_object(config[config_name])
     db.init_app(app)
     global redis_store
-    redis_store = StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT)
-    CSRFProtect(app)
+    redis_store = StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT,decode_responses=True)
+    #CSRFProtect(app)
     Session(app)
 
     #注册蓝图
     from info.modules.index import index_blu
     app.register_blueprint(index_blu)
+
+    from info.modules.passport import passport_blu
+    app.register_blueprint(passport_blu)
 
     return app
