@@ -105,7 +105,6 @@ def send_sms_code():
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="数据保存失败")
 
-
     return jsonify(errno=RET.OK, errmsg="发送成功")
 
 
