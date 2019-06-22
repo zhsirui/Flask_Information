@@ -46,8 +46,8 @@ def register():
     user.mobile = mobile
     user.last_login = datetime.now()
 
-    # TODO 对密码进行处理
-    # user.password = password
+    # TODO对密码进行处理
+    user.password = password
 
     try:
         db.session.add(user)
@@ -95,9 +95,9 @@ def send_sms_code():
     sms_code_str = "%06d" % random.randint(0, 999999)
     current_app.logger.debug("短信验证码内容： %s" % sms_code_str)
 
-    result = CCP().send_template_sms(mobile,[sms_code_str, constants.SMS_CODE_REDIS_EXPIRES/60], "1")
-    if result != 0:
-        return jsonify(errno=RET.THIRDERR, errmsg="发送短信失败")
+    # result = CCP().send_template_sms(mobile,[sms_code_str, constants.SMS_CODE_REDIS_EXPIRES/60], "1")
+    # if result != 0:
+    #     return jsonify(errno=RET.THIRDERR, errmsg="发送短信失败")
 
     try:
         redis_store.set("SMS_" + mobile, sms_code_str, constants.SMS_CODE_REDIS_EXPIRES)

@@ -55,6 +55,8 @@ class User(BaseModel, db.Model):
                                 backref=db.backref('followed', lazy='dynamic'),
                                 lazy='dynamic')
 
+
+
     # 当前用户所发布的新闻
     news_list = db.relationship('News', backref='user', lazy='dynamic')
 
