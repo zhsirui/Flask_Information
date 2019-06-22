@@ -102,7 +102,7 @@ $(function(){
 		$(this).find('a')[0].click()
 	})
 
-    // TODO 登录表单提交
+    // TODO登录表单提交
     $(".login_form_con").submit(function (e) {
         e.preventDefault()
         var mobile = $(".login_form #mobile").val()
@@ -119,10 +119,34 @@ $(function(){
         }
 
         // 发起登录请求
+         var params = {
+            "mobile": mobile,
+            "password": password,
+        }
+
+        $.ajax({
+            url:"/passport/login",
+            method: "post",
+            data: JSON.stringify(params),
+            contentType: "application/json",
+            headers:{
+                 "X-CSRFToken": getCookie("csrf_token")
+            },
+            success: function (resp) {
+                if (resp.errno == "0") {
+                    // 刷新当前界面
+                    location.reload();
+                }else {
+                    $("#login-password-err").html(resp.errmsg)
+                    $("#login-password-err").show()
+                }
+            }
+        })
+
     })
 
 
-    // TODO 注册按钮点击
+    // TODO注册按钮点击
     $(".register_form_con").submit(function (e) {
         // 阻止默认提交操作
         e.preventDefault()
@@ -164,6 +188,9 @@ $(function(){
             type: "post",
             data: JSON.stringify(params),
             contentType: "application/json",
+            headers:{
+                 "X-CSRFToken": getCookie("csrf_token")
+            },
             success: function (resp) {
                 if (resp.errno == "0"){
                     // 刷新当前界面
@@ -208,7 +235,7 @@ function sendSMSCode() {
         return;
     }
 
-    // TODO 发送短信验证码
+    // TODO发送短信验证码
 
     var params = {
         "mobile": mobile,
@@ -227,6 +254,9 @@ function sendSMSCode() {
         contentType: "application/json",
         // 响应数据的格式
         dataType: "json",
+          headers:{
+                 "X-CSRFToken": getCookie("csrf_token")
+            },
          success: function (response) {
             if (response.errno == "0"){
                 var num = 60
@@ -253,6 +283,13 @@ function sendSMSCode() {
 
      })
 }
+
+function logout() {
+    $.get('/passport/logout', function (resp) {
+        location.reload()
+    })
+}
+
 
 // 调用该函数模拟点击左侧按钮
 function fnChangeMenu(n) {

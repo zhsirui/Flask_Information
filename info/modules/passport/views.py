@@ -16,6 +16,57 @@ from . import passport_blu
 from info.utils.captcha.captcha import captcha
 
 
+@passport_blu.route('/logout')
+def logout():
+
+    session.pop('user_id', None)
+    session.pop('mobile', None)
+    session.pop('nick_name', None)
+
+    return jsonify(errno=RET.OK, errmsg="退出成功")
+
+
+
+@passport_blu.route('/login', methods=["POST"])
+def login():
+
+    params_dict = request.json
+    mobile = params_dict.get("mobile")
+    password = params_dict.get("password")
+
+    if not all([mobile, password]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    if not re.match("^1[3578][0-9]{9}$", mobile):
+        return jsonify(errno=RET.DATAERR, errmsg="手机号不正确")
+
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询错误")
+
+    if not user:
+        return jsonify(errno=RET.NODATA, errmsg="用户不存在")
+
+    if not user.check_passowrd(password):
+        return jsonify(errno=RET.PWDERR, errmsg="用户名或密码错误")
+
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
+
+    user.last_login = datetime.now()
+    # try:
+    #     db.session.commit()
+    # except Exception as e:
+    #     db.session.rollback()
+    #     current_app.logger.error(e)
+
+    return jsonify(errno=RET.OK, errmsg="登陆成功")
+
+
+
+
 @passport_blu.route('/register', methods=["POST"])
 def register():
 
@@ -46,7 +97,6 @@ def register():
     user.mobile = mobile
     user.last_login = datetime.now()
 
-    # TODO对密码进行处理
     user.password = password
 
     try:
