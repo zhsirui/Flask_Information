@@ -1,10 +1,12 @@
 from flask import current_app, jsonify
+from flask import g
 from flask import render_template
 from flask import request
 from flask import session
 
 from info import constants
 from info.models import User, News, Category
+from info.utils.common import user_login_data
 from info.utils.response_code import RET
 from . import index_blu
 from info import redis_store
@@ -53,15 +55,10 @@ def news_list():
 
 
 @index_blu.route('/')
+@user_login_data
 def index():
 
-    user_id = session.get("user_id", None)
-    user = None
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
 
     news_list = []
     try:

@@ -8,7 +8,7 @@ from flask.ext.wtf import CSRFProtect
 from flask.ext.wtf.csrf import generate_csrf
 from redis import StrictRedis
 from config import config
-from info.utils.common import do_index_class
+
 
 
 def setup_log(config_name):
@@ -37,6 +37,8 @@ def create_app(config_name):
     CSRFProtect(app)
     Session(app)
 
+
+    from info.utils.common import do_index_class
     #添加自定义过滤器
     app.add_template_filter(do_index_class, "index_class")
 
@@ -55,5 +57,8 @@ def create_app(config_name):
 
     from info.modules.passport import passport_blu
     app.register_blueprint(passport_blu)
+
+    from info.modules.news import news_blu
+    app.register_blueprint(news_blu)
 
     return app
