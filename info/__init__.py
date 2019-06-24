@@ -8,7 +8,7 @@ from flask.ext.wtf import CSRFProtect
 from flask.ext.wtf.csrf import generate_csrf
 from redis import StrictRedis
 from config import config
-
+from info.utils.common import do_index_class
 
 
 def setup_log(config_name):
@@ -36,6 +36,9 @@ def create_app(config_name):
     redis_store = StrictRedis(host=config[config_name].REDIS_HOST, port=config[config_name].REDIS_PORT,decode_responses=True)
     CSRFProtect(app)
     Session(app)
+
+    #添加自定义过滤器
+    app.add_template_filter(do_index_class, "index_class")
 
     @app.after_request
     def after_request(response):
