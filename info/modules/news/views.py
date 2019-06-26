@@ -6,10 +6,72 @@ from flask import request
 from flask import session
 
 from info import constants, db
-from info.models import News, User, Comment
+from info.models import News, User, Comment, CommentLike
 from info.modules.news import news_blu
 from info.utils.common import user_login_data
 from info.utils.response_code import RET
+
+
+@news_blu.route('/comment_like', methods=["POST"])
+@user_login_data
+def comment_like():
+
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+
+    news_id = request.json.get("news_id")
+    comment_id = request.json.get("comment_id")
+    action = request.json.get("action")
+
+    if not all([news_id, action, comment_id]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    if action not in ["add", "remove"]:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    try:
+        comment_id = int(comment_id)
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    try:
+        comment = Comment.query.get(comment_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据查询错误")
+
+    if not comment:
+        return jsonify(errno=RET.NODATA, errmsg="评论不存在")
+
+    if action == "add":
+        comment_like_model = CommentLike.query.filter(CommentLike.user_id == user.id,
+                                                      CommentLike.comment_id == comment.id).first()
+        if not comment_like_model:
+            comment_like_model = CommentLike()
+            comment_like_model.user_id = user.id
+            comment_like_model.comment_id = comment.id
+            db.session.add(comment_like_model)
+            comment.like_count += 1
+
+    else:
+        comment_like_model = CommentLike.query.filter(CommentLike.user_id==user.id, CommentLike.comment_id==comment.id).first()
+        if comment_like_model:
+            db.session.delete(comment_like_model)
+            comment.like_count -= 1
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="数据库操作失败")
+
+    return jsonify(errno=RET.OK, errmsg="OK")
+
+
 
 
 @news_blu.route('/news_comment', methods=["POST"])
@@ -151,11 +213,27 @@ def news_detail(news_id):
     except Exception as e:
         current_app.logger.error(e)
 
+    comment_like_ids = []
+    if g.user:
+        try:
+            comment_ids = [comment.id for comment in comments]
+            comment_likes = CommentLike.query.filter(CommentLike.comment_id.in_(comment_ids), CommentLike.user_id == g.user.id).all()
+            comment_like_ids = [comment_like.comment_id for comment_like in comment_likes]
+        except Exception as e:
+            current_app.logger.error(e)
+
+
+
+
     comment_dict_li = []
 
     for comment in comments:
         comment_dict = comment.to_dict()
+        comment_dict["is_like"] = False
+        if comment.id in comment_like_ids:
+            comment_dict["is_like"] = True
         comment_dict_li.append(comment_dict)
+
 
 
     data = {
