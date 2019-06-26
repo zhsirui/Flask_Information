@@ -41,8 +41,3 @@ def user_login_data(f):
 
 
 
-def query_user_data():
-
-
-
-    return None
