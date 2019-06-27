@@ -12,6 +12,7 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
+
 @profile_blu.route('/news_list')
 @user_login_data
 def user_news_list():
@@ -245,6 +246,7 @@ def user_info():
 
     data = {
         "user": user.to_dict(),
-
     }
+
+
     return render_template('news/user.html', data=data)

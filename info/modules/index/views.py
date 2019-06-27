@@ -61,6 +61,7 @@ def index():
     user = g.user
 
     news_list = []
+
     try:
         news_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
     except Exception as e:
