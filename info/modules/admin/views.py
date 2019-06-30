@@ -10,7 +10,7 @@ from flask import request
 from flask import session
 from flask import url_for
 
-from info import constants
+from info import constants, db
 from info.models import User, News, Category
 from info.modules.admin import admin_blu
 from info.utils.common import user_login_data
@@ -18,7 +18,59 @@ from info.utils.image_storage import storage
 from info.utils.response_code import RET
 
 
-@admin_blu.route('/news_edit_detail', methods=["get","post"])
+@admin_blu.route('/news_type', methods=["get", "post"])
+def news_type():
+
+    if request.method == "GET":
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return render_template('admin/news_type.html', errmsg="查询数据错误")
+
+        category_dict_li = []
+        for category in categories:
+            cate_dict = category.to_dict()
+            category_dict_li.append(category.to_dict())
+
+        category_dict_li.pop(0)
+
+        data = {
+
+            "categories": category_dict_li
+        }
+
+        return render_template('admin/news_type.html', data=data)
+
+    cname = request.json.get("name")
+    cid = request.json.get("id")
+
+    if not cname:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+    if cid:
+        try:
+            cid = int(cid)
+            category = Category.query.get(cid)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+
+        if not category:
+            return jsonify(errno=RET.NODATA, errmsg="未查寻到分类数据")
+
+        category.name = cname
+    else:
+        category = Category()
+        category.name = cname
+        db.session.add(category)
+
+    return jsonify(errno=RET.OK, errmsg="OK")
+
+
+
+
+@admin_blu.route('/news_edit_detail', methods=["get", "post"])
 def news_edit_detail():
 
     if request.method == "GET":
